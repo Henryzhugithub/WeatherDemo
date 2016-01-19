@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">WeatherDemo</string>
+    <string name="action_settings">设置</string>
+    <string name="action_about">关于</string>
+    <string name="action_location">选择</string>
+    <string name="action_refresh">刷新</string>
+</resources>
