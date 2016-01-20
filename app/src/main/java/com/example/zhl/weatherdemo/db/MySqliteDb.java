@@ -93,13 +93,12 @@ public class MySqliteDb {
         return array;
     }
 
-    //保存获取到的基本天气信息到数据库中，如果存在该Area的记录，则删除之，然后将最新数据保存
+    //保存获取到的基本天气信息到数据库中，如果存在该Area的记录，则更新之，如果不存在，则添加该条数据
     public void saveWeatherInfo(String areaId,String areaName,String lastUpdateTime,String weatherDayPhenomenonId,String weatherNightPhenomenonId,
                                 String firstHightTemp,String firstLowTemp,String dayWind,String dayWindNum,String secondHightTemp,String secondLowTemp,
                                 String weatherSecondDayPhenomenonId,String weatherSecondNightPhenomenonId,String thirdHightTemp,String thirdLowTemp,
                                 String weatherThirdDayPhenomenonId,String weatherThirdNightPhenomenonId,String currentDateSave){
 
-        db.delete("weatherinfo","area_id = ?",new String[]{areaId});
         ContentValues values = new ContentValues();
         Cursor cursor = db.rawQuery("select * from weatherinfo where area_id = ?",new String[]{areaId});
         values.put("area_id",areaId);
@@ -178,5 +177,6 @@ public class MySqliteDb {
         Cursor cursor = db.rawQuery("select * from weatherinfo order by current_date asc",null);
         return cursor;
     }
+
 
 }

@@ -5,10 +5,24 @@
         <!-- Customize your theme here. -->
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="AppTheme2" parent="Theme.AppCompat.Light.DarkActionBar">
+    <!-- Customize your theme here. -->
+    <item name="windowActionBar">false</item>
+    <item name="windowNoTitle">true</item>
+    <item name="colorPrimary">@color/md_red_500</item>
+    <item name="colorPrimaryDark">@color/md_red_700</item>
+    <item name="colorAccent">@color/md_blue_A200</item>
+    <item name="colorControlHighlight">@color/md_red_500_25</item>​
+    <item name="colorControlNormal">@color/md_black_1000_50</item>
+    <item name="colorSwitchThumbNormal">@color/md_grey_200</item>
+    <item name="windowActionModeOverlay">true</item>
+    <item name="actionModeBackground">@color/md_red_500</item>​
+
     </style>
 
     <style name="AppTheme.NoActionBar">

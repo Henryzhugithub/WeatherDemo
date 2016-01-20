@@ -18,6 +18,7 @@ public class FirstActivity extends AppCompatActivity implements Runnable {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.first_activity);
+
         HandlerUtils.postDelayed(this,2000);
     }
 

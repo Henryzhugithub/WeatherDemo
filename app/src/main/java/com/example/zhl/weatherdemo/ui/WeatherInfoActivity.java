@@ -2,6 +2,7 @@ package com.example.zhl.weatherdemo.ui;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.PersistableBundle;
@@ -19,6 +20,8 @@ import android.widget.TextView;
 
 import com.example.zhl.weatherdemo.R;
 import com.example.zhl.weatherdemo.db.MySqliteDb;
+import com.example.zhl.weatherdemo.service.AutoUpdateService;
+import com.example.zhl.weatherdemo.util.GetAddress;
 import com.example.zhl.weatherdemo.util.GetKey;
 import com.example.zhl.weatherdemo.util.HttpCallback;
 import com.example.zhl.weatherdemo.util.HttpUtil;
@@ -66,11 +69,8 @@ public class WeatherInfoActivity extends AppCompatActivity {
 
     private ProgressDialog progressDialog;
 
-    private static final int THREAD_NUM = 1;
-    private CyclicBarrier cb;
+    private SharedPreferences spf;
 
-    //第一个查询天气基本信息的子线程,需要优先指数查询线程执行
-    Thread firstThread;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -116,6 +116,8 @@ public class WeatherInfoActivity extends AppCompatActivity {
         }
     }
 
+
+
     private void showWeather(){
         Cursor cursor;
         if (temp_area_id != null){
@@ -139,17 +141,21 @@ public class WeatherInfoActivity extends AppCompatActivity {
 
             mCityName.setText(cursor.getString(cursor.getColumnIndex("area_name")));     //  cursor.getString(cursor.getColumnIndex("current_date"))
             index_info.setText(cursor.getString(cursor.getColumnIndex("cloth_index")));
+            weather_phenomenon.setImageResource(R.drawable.d00);
             //根据返回的白天天气现象代码设置图片     // TODO: 2016/1/17
             high_temp.setText(cursor.getString(cursor.getColumnIndex("first_hight_temp"))+"℃");
             low_temp.setText(cursor.getString(cursor.getColumnIndex("first_low_temp"))+"℃");
-            pollution_disc.setText(judgeWind(cursor.getString(cursor.getColumnIndex("dayWind")))+","+judgeWindNum(cursor.getString(cursor.getColumnIndex("dayWindNum"))));   //风向、风力
+            pollution_disc.setText(judgeWind(cursor.getString(cursor.getColumnIndex("dayWind"))) + "," + judgeWindNum(cursor.getString(cursor.getColumnIndex("dayWindNum"))));   //风向、风力
             tomorrow_phenomenon_iamge.setImageResource(R.mipmap.ic_launcher);    // TODO: 2016/1/17  weatherInfoData[10]
-            tomorrow_high_temp.setText(cursor.getString(cursor.getColumnIndex("secondHightTemp"))+"℃");
-            tomorrow_low_temp.setText(cursor.getString(cursor.getColumnIndex("secondLowTemp"))+"℃");
+            tomorrow_high_temp.setText(cursor.getString(cursor.getColumnIndex("secondHightTemp")) + "℃");
+            tomorrow_low_temp.setText(cursor.getString(cursor.getColumnIndex("secondLowTemp")) + "℃");
             day_after_tomorrow_iamge.setImageResource(R.mipmap.ic_launcher);     // TODO: 2016/1/17   weatherInfoData[13]
-            day_after_tomorrow_high_temp.setText(cursor.getString(cursor.getColumnIndex("thirdHightTemp"))+"℃");
+            day_after_tomorrow_high_temp.setText(cursor.getString(cursor.getColumnIndex("thirdHightTemp")) + "℃");
             day_after_tomorrow_low_temp.setText(cursor.getString(cursor.getColumnIndex("thirdLowTemp"))+"℃");
 
+            //启动自动更新服务
+            Intent intent = new Intent(this, AutoUpdateService.class);
+            startService(intent);
         }
         if (cursor != null){
             cursor.close();
@@ -162,24 +168,14 @@ public class WeatherInfoActivity extends AppCompatActivity {
 
 
     private void queryWeather(final String area_id){
-        SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmm");
+
         SimpleDateFormat df2 = new SimpleDateFormat("yyyyMMddHHmmss");
         Date date = new Date();
-        final String currentDate = df.format(date);
         final String currentDateSave = df2.format(date);
-        Log.d("currentDate",currentDate);
-        Log.d("currentDate",currentDateSave);
-        public_key ="http://open.weather.com.cn/data/?areaid="+area_id+"&type=forecast_v&date="+currentDate+"&appid=e56d996b0823c0ec";
-        public_key_index = "http://open.weather.com.cn/data/?areaid="+area_id+"&type=index_v&date="+currentDate+"&appid=e56d996b0823c0ec";
+        Log.d("currentDate", currentDateSave);
+        String address = GetAddress.address(area_id);        //获取到基本天气信息的地址
+        final String addressIndex = GetAddress.addressIndex(area_id);          //获取到天气指数的地址
 
-        String key = GetKey.standardURLEncoder(public_key,PRIVATE_KEY);              //经过加密处理后得到的key
-        Log.d("key",key);
-        final String  address = "http://open.weather.com.cn/data/?areaid="+area_id+"&type=forecast_v&date="+currentDate+"&appid=e56d99&key="+key;
-
-        //解析天气信息
-        String key2 = GetKey.standardURLEncoder(public_key_index,PRIVATE_KEY);
-        Log.d("key2",key2);
-        final String addressIndex = "http://open.weather.com.cn/data/?areaid="+area_id+"&type=index_v&date="+currentDate+"&appid=e56d99&key="+key2;
 
         HttpUtil.sendHttpRequest(address, new HttpCallback() {
             @Override
@@ -209,6 +205,7 @@ public class WeatherInfoActivity extends AppCompatActivity {
                             public void run() {
                                 mSyncFlag.setVisibility(View.VISIBLE);
                                 mSyncFlag.setText("同步指数信息失败！");
+                                closeProgressDialog();
                             }
                         });
                     }
@@ -222,6 +219,7 @@ public class WeatherInfoActivity extends AppCompatActivity {
                     public void run() {
                         mSyncFlag.setVisibility(View.VISIBLE);
                         mSyncFlag.setText("同步3天预报信息失败！");
+                        closeProgressDialog();
                     }
                 });
             }
@@ -266,7 +264,12 @@ public class WeatherInfoActivity extends AppCompatActivity {
                 finish();
                 break;
             case R.id.action_refresh:
-
+                mSyncFlag.setText("同步中……");
+                //获取到当前界面的城市名称
+                String temp_area_name = mCityName.getText().toString();
+                temp_area_id = mySqliteDb.queryAreaId(temp_area_name);
+                //根据城市名称重新从服务器上下载天气信息并保存至数据库
+                queryWeather(temp_area_id);
                 break;
             case R.id.action_settings:
                 Intent intent2 = new Intent(WeatherInfoActivity.this,SettingActivity.class);
@@ -279,6 +282,7 @@ public class WeatherInfoActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
 
     @Override
     public void onBackPressed() {
