@@ -113,15 +113,22 @@ public class MySqliteDb {
         values.put("weather_second_night_phenomenon_id",weatherSecondNightPhenomenonId);
         values.put("thirdHightTemp",thirdHightTemp);
         values.put("thirdLowTemp",thirdLowTemp);
-        values.put("weather_third_day_phenomenon_id",weatherThirdDayPhenomenonId);
-        values.put("weather_third_night_phenomenon_id",weatherThirdNightPhenomenonId);
-        values.put("current_date",currentDateSave);
+        values.put("currentdate",currentDateSave);
         if (cursor.getCount() == 0){
+            values.put("weather_third_day_phenomenon_id",weatherThirdDayPhenomenonId);
+            values.put("weather_third_night_phenomenon_id",weatherThirdNightPhenomenonId);
             values.put("first_hight_temp",firstHightTemp);
             values.put("dayWind",dayWind);
             values.put("dayWindNum",dayWindNum);
             db.insert("weatherinfo",null,values);
+        }else if (firstHightTemp.equals("")){
+            db.update("weatherinfo",values,null,null);
         }else {
+            values.put("weather_third_day_phenomenon_id",weatherThirdDayPhenomenonId);
+            values.put("weather_third_night_phenomenon_id",weatherThirdNightPhenomenonId);
+            values.put("first_hight_temp",firstHightTemp);
+            values.put("dayWind",dayWind);
+            values.put("dayWindNum",dayWindNum);
             db.update("weatherinfo",values,null,null);
         }
 
@@ -129,9 +136,6 @@ public class MySqliteDb {
 
     //保存获取到的指数天气信息到数据库中，如果存在该Area的记录，则更新之
     public void saveWeatherIndexInfo(String areaId,String clothIndex,String carIndex){
-/*        Cursor cursor = db.query("weatherinfo",null,"area_id = ?",new String[]{areaId},null,null,null);
-        int cursorCountIndex = cursor.getCount();
-        Log.d("cursor",cursorCountIndex+"");*/
 
         ContentValues values = new ContentValues();
         values.put("cloth_index",clothIndex);
@@ -145,36 +149,17 @@ public class MySqliteDb {
         Cursor cursor = db.query("weatherinfo",null,"area_id = ?",new String[]{temp_area_id},null,null,null,"1");
         return cursor;
 
-/*        int curcount = cursor.getCount();
-        Log.d("c",curcount+"");
-        String[] data = new String[15];
-        if (cursor.moveToFirst()){
-            do {
-                data[0] = temp_area_id;
-                data[1] = cursor.getString(cursor.getColumnIndex("area_name"));
-                data[2] = cursor.getString(cursor.getColumnIndex("last_update_time"));
-                data[3] = cursor.getString(cursor.getColumnIndex("weather_day_phenomenon_id"));
-                data[4] = cursor.getString(cursor.getColumnIndex("first_hight_temp"));
-                data[5] = cursor.getString(cursor.getColumnIndex("first_low_temp"));
-                data[6] = cursor.getString(cursor.getColumnIndex("dayWind"));
-                data[7] = cursor.getString(cursor.getColumnIndex("dayWindNum"));
-                data[8] = cursor.getString(cursor.getColumnIndex("secondHightTemp"));
-                data[9] = cursor.getString(cursor.getColumnIndex("secondLowTemp"));
-                data[10] = cursor.getString(cursor.getColumnIndex("weather_second_day_phenomenon_id"));
-                data[11] = cursor.getString(cursor.getColumnIndex("thirdHightTemp"));
-                data[12] = cursor.getString(cursor.getColumnIndex("thirdLowTemp"));
-                data[13] = cursor.getString(cursor.getColumnIndex("weather_third_day_phenomenon_id"));
-                data[14] = cursor.getString(cursor.getColumnIndex("cloth_index"));
-            }while (cursor.moveToNext());
-        }
-
-        return data;*/
     }
 
     //查询需要直接显示的天气信息
     public Cursor queryLastWeather(){
-        //Cursor cursor = db.query("weatherinfo",null,null,null,null,null,"current_date desc");
-        Cursor cursor = db.rawQuery("select * from weatherinfo order by current_date asc",null);
+        Cursor cursor = db.rawQuery("select * from weatherinfo order by currentdate desc limit 1",null);
+        if (cursor.moveToFirst()){
+            do {
+                String a = cursor.getString(cursor.getColumnIndex("currentdate"));
+                Log.d("currentdate",a);
+            }while (cursor.moveToNext());
+        }
         return cursor;
     }
 

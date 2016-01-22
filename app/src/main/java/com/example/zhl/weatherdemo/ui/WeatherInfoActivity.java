@@ -57,19 +57,13 @@ public class WeatherInfoActivity extends AppCompatActivity {
     private TextView day_after_tomorrow_low_temp;     //第二天最低温度
     private TextView day_after_tomorrow_high_temp;    //第二天最高温度
 
-    private String[] weatherInfoData;
 
     private MySqliteDb mySqliteDb;
     private String select_area_name;
     private String temp_area_id;
 
-    private static final String PRIVATE_KEY = "db4f97_SmartWeatherAPI_6e3a472";
-    private String public_key;
-    private String public_key_index;
-
     private ProgressDialog progressDialog;
 
-    private SharedPreferences spf;
 
 
     @Override
@@ -119,16 +113,16 @@ public class WeatherInfoActivity extends AppCompatActivity {
 
 
     private void showWeather(){
-        Cursor cursor;
+        Cursor cursor = null;
         if (temp_area_id != null){
             cursor = mySqliteDb.queryWeatherInfo(temp_area_id);
-        }else {
+        }else if (select_area_name == null){
             cursor = mySqliteDb.queryLastWeather();
         }
         closeProgressDialog();
-        if (cursor.moveToLast()){
+        if (cursor.moveToFirst()){
 
-            String dtime = cursor.getString(cursor.getColumnIndex("current_date"));
+            String dtime = cursor.getString(cursor.getColumnIndex("currentdate"));
             Log.d("dtime",dtime);
             String last_update_time = cursor.getString(cursor.getColumnIndex("last_update_time"));
             if (last_update_time == null || last_update_time.equals("")){
@@ -136,12 +130,14 @@ public class WeatherInfoActivity extends AppCompatActivity {
                 return;
             }
             mWeather.setVisibility(View.VISIBLE);
-            mSyncFlag.setText(last_update_time.substring(6,8)+"日"+last_update_time.substring(8,10)+"时更新！");
+            mSyncFlag.setText(last_update_time.substring(6, 8) + "日" + last_update_time.substring(8, 10) + "时更新！");
 
 
             mCityName.setText(cursor.getString(cursor.getColumnIndex("area_name")));     //  cursor.getString(cursor.getColumnIndex("current_date"))
             index_info.setText(cursor.getString(cursor.getColumnIndex("cloth_index")));
             weather_phenomenon.setImageResource(R.drawable.d00);
+            String weather_phenomenon_id = cursor.getString(cursor.getColumnIndex("weather_day_phenomenon_id"));
+            judgeWeatherPhenomenon(weather_phenomenon_id);
             //根据返回的白天天气现象代码设置图片     // TODO: 2016/1/17
             high_temp.setText(cursor.getString(cursor.getColumnIndex("first_hight_temp"))+"℃");
             low_temp.setText(cursor.getString(cursor.getColumnIndex("first_low_temp"))+"℃");
@@ -151,11 +147,9 @@ public class WeatherInfoActivity extends AppCompatActivity {
             tomorrow_low_temp.setText(cursor.getString(cursor.getColumnIndex("secondLowTemp")) + "℃");
             day_after_tomorrow_iamge.setImageResource(R.mipmap.ic_launcher);     // TODO: 2016/1/17   weatherInfoData[13]
             day_after_tomorrow_high_temp.setText(cursor.getString(cursor.getColumnIndex("thirdHightTemp")) + "℃");
-            day_after_tomorrow_low_temp.setText(cursor.getString(cursor.getColumnIndex("thirdLowTemp"))+"℃");
+            day_after_tomorrow_low_temp.setText(cursor.getString(cursor.getColumnIndex("thirdLowTemp")) + "℃");
 
-            //启动自动更新服务
-            Intent intent = new Intent(this, AutoUpdateService.class);
-            startService(intent);
+
         }
         if (cursor != null){
             cursor.close();
@@ -163,7 +157,6 @@ public class WeatherInfoActivity extends AppCompatActivity {
 
         Log.d("Thread","showWeather");
     }
-
 
 
 
@@ -180,15 +173,15 @@ public class WeatherInfoActivity extends AppCompatActivity {
         HttpUtil.sendHttpRequest(address, new HttpCallback() {
             @Override
             public void onFinish(String response) {
-                Utility.handleWeatherResponse(WeatherInfoActivity.this,response,currentDateSave);
-                Log.d("Thread","主信息！");
+                Utility.handleWeatherResponse(WeatherInfoActivity.this, response, currentDateSave);
+                Log.d("Thread", "主信息！");
 
                 //解析天气指数信息
                 HttpUtil.sendHttpRequest(addressIndex, new HttpCallback() {
                     @Override
                     public void onFinish(String response) {
-                        boolean result = Utility.handleWeatherIndexResponse(WeatherInfoActivity.this,area_id,response);
-                        if (result){
+                        boolean result = Utility.handleWeatherIndexResponse(WeatherInfoActivity.this, area_id, response);
+                        if (result) {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -361,6 +354,70 @@ public class WeatherInfoActivity extends AppCompatActivity {
                 break;
         }
         return windNum;
+    }
+
+    private void judgeWeatherPhenomenon(String weather_phenomenon_id){
+        switch (weather_phenomenon_id){
+            case "00":
+                weather_phenomenon.setImageResource(R.drawable.d00);
+                break;
+            case "01":
+                weather_phenomenon.setImageResource(R.drawable.d01);
+                break;
+            case "02":
+                weather_phenomenon.setImageResource(R.drawable.d02);
+                break;
+            case "03":
+                weather_phenomenon.setImageResource(R.drawable.d03);
+                break;
+            case "04":
+                weather_phenomenon.setImageResource(R.drawable.d04);
+                break;
+            case "05":
+                weather_phenomenon.setImageResource(R.drawable.d05);
+                break;
+            case "06":
+                weather_phenomenon.setImageResource(R.drawable.d06);
+                break;
+            case "07":
+                weather_phenomenon.setImageResource(R.drawable.d07);
+                break;
+            case "08":
+                weather_phenomenon.setImageResource(R.drawable.d08);
+                break;
+            case "09":
+                weather_phenomenon.setImageResource(R.drawable.d09);
+                break;
+            case "10":
+                weather_phenomenon.setImageResource(R.drawable.d10);
+                break;
+            case "11":
+                weather_phenomenon.setImageResource(R.drawable.d11);
+                break;
+            case "14":
+                weather_phenomenon.setImageResource(R.drawable.d14);
+                break;
+            case "15":
+                weather_phenomenon.setImageResource(R.drawable.d15);
+                break;
+            case "16":
+                weather_phenomenon.setImageResource(R.drawable.d16);
+                break;
+            case "17":
+                weather_phenomenon.setImageResource(R.drawable.d17);
+                break;
+            case "26":
+                weather_phenomenon.setImageResource(R.drawable.d26);
+                break;
+            case "27":
+                weather_phenomenon.setImageResource(R.drawable.d27);
+                break;
+            case "28":
+                weather_phenomenon.setImageResource(R.drawable.d28);
+                break;
+            default:
+                weather_phenomenon.setImageResource(R.drawable.undefined);
+        }
     }
 
 }

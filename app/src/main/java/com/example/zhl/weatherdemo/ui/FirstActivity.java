@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
 import com.example.zhl.weatherdemo.R;
+import com.example.zhl.weatherdemo.service.AutoUpdateService;
 import com.example.zhl.weatherdemo.util.HandlerUtils;
 
 /**
@@ -19,6 +20,11 @@ public class FirstActivity extends AppCompatActivity implements Runnable {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.first_activity);
 
+        //启动自动更新服务
+        Intent intent = new Intent(this, AutoUpdateService.class);
+        startService(intent);
+
+        //延迟两秒启动
         HandlerUtils.postDelayed(this,2000);
     }
 

@@ -63,8 +63,8 @@ public class AutoUpdateService extends Service {
         Log.d("currentDate", currentDateSave);
         mySqliteDb = MySqliteDb.getInstance(this);
         Cursor cursor = mySqliteDb.queryLastWeather();
-        if (cursor != null){
-            if (cursor.moveToLast()){
+        if (cursor.getCount() != 0){
+            if (cursor.moveToFirst()){
                 area_id = cursor.getString(cursor.getColumnIndex("area_id"));
             }
             String address = GetAddress.address(area_id);
@@ -99,7 +99,7 @@ public class AutoUpdateService extends Service {
             });
 
         }
-        Toast.makeText(AutoUpdateService.this, "需要自动更新的数据库中没有记录！", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(AutoUpdateService.this, "需要自动更新的数据库中没有记录！", Toast.LENGTH_SHORT).show();
     }
 
     @Override

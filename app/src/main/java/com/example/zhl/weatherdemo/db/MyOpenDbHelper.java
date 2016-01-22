@@ -39,7 +39,7 @@ public class MyOpenDbHelper extends SQLiteOpenHelper {
             +"weather_third_night_phenomenon_id text,"
             +"cloth_index text,"
             +"car_index text,"
-            +"current_date text)"
+            +"currentdate text)"
             ;
 
     public MyOpenDbHelper(Context context, String name, SQLiteDatabase.CursorFactory factory,int version){
