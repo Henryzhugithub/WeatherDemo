@@ -1,10 +1,14 @@
 package com.example.zhl.weatherdemo.ui;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.PersistableBundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutCompat;
@@ -17,6 +21,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.zhl.weatherdemo.R;
 import com.example.zhl.weatherdemo.db.MySqliteDb;
@@ -25,10 +30,12 @@ import com.example.zhl.weatherdemo.util.GetAddress;
 import com.example.zhl.weatherdemo.util.GetKey;
 import com.example.zhl.weatherdemo.util.HttpCallback;
 import com.example.zhl.weatherdemo.util.HttpUtil;
+import com.example.zhl.weatherdemo.util.ScreenShotUtils;
 import com.example.zhl.weatherdemo.util.Utility;
 
 import org.w3c.dom.Text;
 
+import java.io.File;
 import java.security.PublicKey;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -40,6 +47,8 @@ import java.util.concurrent.CyclicBarrier;
  */
 public class WeatherInfoActivity extends AppCompatActivity {
 
+
+    private Activity mActivity;
     private Toolbar toolbar;
     private LinearLayout mWeather;
     private TextView mSyncFlag;
@@ -71,6 +80,7 @@ public class WeatherInfoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_main);
 
+        mActivity = WeatherInfoActivity.this;
         mWeather = (LinearLayout) findViewById(R.id.weather);
         mSyncFlag = (TextView) findViewById(R.id.sync_flag);
         mShare = (ImageView) findViewById(R.id.share);
@@ -108,6 +118,37 @@ public class WeatherInfoActivity extends AppCompatActivity {
         }else {
             showWeather();
         }
+
+        mShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showProgressDialog();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        boolean picFlag = ScreenShotUtils.savePic(ScreenShotUtils.takeScreenShot(mActivity),"/sdcard/WeatherDemo/");
+                        if (picFlag){
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    String path = Environment.getExternalStorageDirectory().getAbsolutePath()+ File.separator+"WeatherDemo/temp.png";
+                                    Uri uriToImage = Uri.parse("file:///"+path);
+                                    //Uri uriToImage = Uri.parse("/sdcard/WeatherDemo/temp.png");
+                                    closeProgressDialog();
+                                    Intent shareIntent = new Intent();
+                                    shareIntent.setAction(Intent.ACTION_SEND);
+                                    shareIntent.setType("image/*");
+                                    shareIntent.putExtra(Intent.EXTRA_STREAM, uriToImage);
+                                    shareIntent.putExtra(Intent.EXTRA_TEXT,"This is text to show.");
+                                    shareIntent.putExtra("Kdescription", "分享功能");
+                                    startActivity(Intent.createChooser(shareIntent,"分享天气到："));
+                                }
+                            });
+                        }
+                    }
+                }).start();
+            }
+        });
     }
 
 
